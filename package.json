@@ -1,0 +1,38 @@
+{
+  "name": "@lawchihon/olevod-api",
+  "version": "0.0.0",
+  "description": "API helper to get info from olevod.com",
+  "main": "index.js",
+  "keywords": [
+    "lawchihon",
+    "olevod",
+    "api"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lawchihon/olevod-api.git"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "files": [
+    "index.js",
+    "constants.js"
+  ],
+  "author": "Chi Hon Law <chihonlaw@gmail.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "@johman/helper": "^0.0.0",
+    "axios": "^0.19.2",
+    "cheerio": "^1.0.0-rc.2",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "@johman/helper": "^0.0.0",
+    "axios": "^0.19.2",
+    "cheerio": "^1.0.0-rc.2",
+    "lodash": "^4.17.11",
+    "mocha": "^7.1.2"
+  },
+  "dependencies": {}
+}
