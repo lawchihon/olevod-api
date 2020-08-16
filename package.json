@@ -1,6 +1,6 @@
 {
   "name": "@lawchihon/olevod-api",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "API helper to get info from olevod.com",
   "main": "index.js",
   "keywords": [
