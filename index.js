@@ -17,6 +17,24 @@ const olevodInstance = axios.create({
   }
 });
 
+const getResponse = async (instance, options, retry = 0) => {
+  if (retry > 4) return Promise.reject('Failed to get response');
+  try {
+    const response = await instance(options);
+    if (!response.data || !response.data.includes('window.location=url')) {
+      return response;
+    }
+    const context = {};
+    vm.createContext(context);
+    vm.runInContext(`var url=${response.data.extractBetween('var url=', 'window.location=url')}`, context);
+    options.url = c.BASE_URL + context.url;
+  } catch (err) {
+    console.log(err);
+    await helper.delay(1000 * Math.min(Math.random() * 2 + 1, 2));
+  }
+  return getResponse(instance, options, retry + 1);
+};
+
 const parseDetailId = (link) => {
   return link.replace(/\/\?m=vod-detail-id-|.html/g, '')
 };
@@ -94,7 +112,7 @@ const getDefaultList = (instance) => {
     method: 'GET',
     url: `${c.BASE_URL}/?m=vod-list-id-1.html`
   };
-  return instance(options)
+  return getResponse(instance, options);
 };
 
 const getConditionFilter = (index, startString, endString, instance) => {
@@ -132,7 +150,7 @@ class Olevod {
       method: 'HEAD',
       url: c.BASE_URL,
     };
-    return instance(options)
+    return getResponse(instance, options)
       .then(() => true)
       .catch((err) => {
         console.log(err);
@@ -149,7 +167,7 @@ class Olevod {
     const calls = [getDefaultList(instance)];
     if (isAdult) {
       calls.push(
-        instance({
+        getResponse(instance, {
           method: 'GET',
           url: `${c.BASE_URL}/index.php?m=label-a_vod_index.html`
         })
@@ -262,7 +280,7 @@ class Olevod {
           m: `${mode}.html`,
         }
       };
-      return instance(options)
+      return getResponse(instance, options)
         .then((response) => {
           const $ = cheerio.load(response.data);
           const results = [];
@@ -305,7 +323,7 @@ class Olevod {
       }
     };
 
-    return instance(options)
+    return getResponse(instance, options)
       .then((response) => {
         const $ = cheerio.load(response.data);
         const results = [];
@@ -333,7 +351,7 @@ class Olevod {
       }
     };
 
-    return instance(options)
+    return getResponse(instance, options)
       .then(response => {
         const result = parseDetail(response.data);
 
@@ -358,7 +376,7 @@ class Olevod {
       }
     };
 
-    return instance(options)
+    return getResponse(instance, options)
       .then(response => {
         const detail = parseDetail(response.data);
 
