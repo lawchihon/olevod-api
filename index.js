@@ -30,7 +30,7 @@ const getResponse = async (instance, options, retry = 0) => {
     options.url = c.BASE_URL + context.url;
   } catch (err) {
     console.log(err);
-    await helper.delay(1000 * Math.min(Math.random() * 2 + 1, 2));
+    await jh.delay(1000 * Math.min(Math.random() * 2 + 1, 2));
   }
   return getResponse(instance, options, retry + 1);
 };
@@ -254,7 +254,7 @@ class Olevod {
    * @returns {Promise<Array>}
    */
   static getVideos() {
-    const {search, typeId, page = 1, order = c.ORDERS.TIME, year, letter, area, language, instance = olevodInstance}
+    const {search, typeId, page = 1, order = c.ORDERS.TIME.value, year, letter, area, language, instance = olevodInstance}
     = jh.convertToByReference(
       arguments,
       ['search', 'typeId', 'page', 'order', 'year', 'letter', 'area', 'language', 'instance']
@@ -264,11 +264,11 @@ class Olevod {
     if (!typeId && !search) {
       let mode;
       switch (order){
-        case c.ORDERS.HITS:
-        case c.ORDERS.RATES:
+        case c.ORDERS.HITS.value:
+        case c.ORDERS.RATES.value:
           mode = 'vod-map';
           break;
-        case c.ORDERS.TIME:
+        case c.ORDERS.TIME.value:
         default:
           mode = 'label-new';
       }
@@ -291,13 +291,13 @@ class Olevod {
 
             let lists;
             switch (order){
-              case c.ORDERS.HITS:
+              case c.ORDERS.HITS.value:
                 lists = element.find('ul').last().find('li');
                 break;
-              case c.ORDERS.RATES:
+              case c.ORDERS.RATES.value:
                 lists = element.find('ul').first().find('li');
                 break;
-              case c.ORDERS.TIME:
+              case c.ORDERS.TIME.value:
               default:
                 lists = element.find('li');
             }
