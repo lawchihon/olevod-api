@@ -13,74 +13,31 @@ before('Confirm Olevod is alive', function () {
 });
 
 describe('olevod', function() {
-  describe('getTypes()', function() {
+  describe('getFilters()', function() {
     this.timeout(90000);
-    it('get type filters without adult types', function() {
-      return Olevod.getTypes()
+    it('get filters without adult types', function() {
+      return Olevod.getFilters()
         .then(filters => {
-          assert(filters.length, 5);
+          assert.strictEqual(filters.types.length, Object.keys(OlevodC.TYPES).length - 1);
+          assert.strictEqual(filters.orders.length, Object.keys(OlevodC.ORDERS).length);
+          assert.strictEqual(filters.areas.length, Object.keys(OlevodC.AREAS).length);
+          assert.strictEqual(filters.years.length, Object.keys(OlevodC.YEARS).length);
+          assert.strictEqual(filters.languages.length, Object.keys(OlevodC.LANGUAGES).length);
+          assert.strictEqual(filters.letters.length, Object.keys(OlevodC.LETTERS).length);
+          assert.strictEqual(filters.conditions.length, Object.keys(OlevodC.CONDITIONS).length);
         })
         .catch(jh.handleTestError);
     });
-    it('get type filters with adult types', function() {
-      return Olevod.getTypes({isAdult: true})
+    it('get filters with adult types', function() {
+      return Olevod.getFilters({isAdult: true})
         .then(filters => {
-          assert(filters.length, 9);
-        })
-        .catch(jh.handleTestError);
-    });
-  });
-
-  describe('getOrders()', function() {
-    this.timeout(90000);
-    it('get order filters', function() {
-      return Olevod.getOrders()
-        .then(orders => {
-          assert(orders.length, 3);
-        })
-        .catch(jh.handleTestError);
-    });
-  });
-
-  describe('getYears()', function() {
-    this.timeout(90000);
-    it('get year filters', function() {
-      return Olevod.getYears()
-        .then(filters => {
-          assert(filters.length >= 7);
-        })
-        .catch(jh.handleTestError);
-    });
-  });
-
-  describe('getAreas()', function() {
-    this.timeout(90000);
-    it('get area filters', function() {
-      return Olevod.getAreas()
-        .then(filters => {
-          assert(filters.length >= 16);
-        })
-        .catch(jh.handleTestError);
-    });
-  });
-
-  describe('getLanguages()', function() {
-    this.timeout(90000);
-    it('get language filters', function() {
-      return Olevod.getLanguages()
-        .then(filters => {
-          assert(filters.length >= 9);
-        })
-        .catch(jh.handleTestError);
-    });
-  });
-
-  describe('getLetters()', function() {
-    this.timeout(90000);
-    it('get letter filters', function() {
-      return Olevod.getLetters()
-        .then(filters => {
-          assert(filters.length, 26);
+          assert.strictEqual(filters.types.length, Object.keys(OlevodC.TYPES).length);
+          assert.strictEqual(filters.orders.length, Object.keys(OlevodC.ORDERS).length);
+          assert.strictEqual(filters.areas.length, Object.keys(OlevodC.AREAS).length);
+          assert.strictEqual(filters.years.length, Object.keys(OlevodC.YEARS).length);
+          assert.strictEqual(filters.languages.length, Object.keys(OlevodC.LANGUAGES).length);
+          assert.strictEqual(filters.letters.length, Object.keys(OlevodC.LETTERS).length);
+          assert.strictEqual(filters.conditions.length, Object.keys(OlevodC.CONDITIONS).length);
         })
         .catch(jh.handleTestError);
     });
@@ -91,7 +48,7 @@ describe('olevod', function() {
     it('search videos without filter`', function(){
       return Olevod.getVideos()
         .then(videos => {
-          assert(videos.length, 40);
+          assert(videos.length > 0);
         })
         .catch(jh.handleTestError);
     });
@@ -99,7 +56,7 @@ describe('olevod', function() {
       const order = OlevodC.ORDERS.HITS;
       return Olevod.getVideos({order})
         .then(videos => {
-          assert(videos.length, 80);
+          assert(videos.length > 0);
         })
         .catch(jh.handleTestError);
     });
@@ -107,14 +64,14 @@ describe('olevod', function() {
       const order = OlevodC.ORDERS.RATES;
       return Olevod.getVideos({order})
         .then(videos => {
-          assert(videos.length, 80);
+          assert(videos.length > 0);
         })
         .catch(jh.handleTestError);
     });
     it('search videos with context `星`', function(){
       return Olevod.getVideos({search: '星'})
         .then(videos => {
-          assert(videos.length > 0);
+          assert.strictEqual(videos.length, 33);
         })
         .catch(jh.handleTestError);
     });
@@ -126,9 +83,9 @@ describe('olevod', function() {
       const detailId = '1';
       return Olevod.getVideo({detailId})
         .then(video => {
-          assert(video.detailId, detailId);
-          assert(video.title, '星际穿越');
-          assert(video.playInfos.length, 1);
+          assert.strictEqual(video.detailId, detailId);
+          assert.strictEqual(video.title, '星际穿越');
+          assert.strictEqual(video.playInfos.length, 1);
         })
         .catch(jh.handleTestError);
     });
@@ -137,13 +94,13 @@ describe('olevod', function() {
   describe('getPlayInfo()', function() {
     this.timeout(90000);
     it('get play info', function(){
-      const playId = '1-src-1-num-1';
+      const playId = '1-1-1';
       return Olevod.getPlayInfo({playId})
         .then(playInfo => {
-          assert(playInfo.playId, playId);
-          assert(playInfo.title, '《星际穿越》-��线播放');
-          assert(playInfo.detail.detailId, '1');
-          assert(playInfo.detail.title, '星际穿越');
+          assert.strictEqual(playInfo.playId, playId);
+          assert.strictEqual(playInfo.title, '在线播放');
+          assert.strictEqual(playInfo.detail.detailId, '1');
+          assert.strictEqual(playInfo.detail.title, '星际穿越');
         })
         .catch(jh.handleTestError);
     });

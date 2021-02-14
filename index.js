@@ -36,39 +36,43 @@ const getResponse = async (instance, options, retry = 0) => {
 };
 
 const parseDetailId = (link) => {
-  return link.replace(/\/\?m=vod-detail-id-|.html/g, '')
+  return link && link.replace(/\/index\.php\/vod\/detail\/id\/|.html/g, '')
 };
 
 const parsePlayId = (link) => {
-  return link.replace(/\/\?m=vod-play-id-|.html/g, '')
+  return link && link.replace(/\/index\.php\/vod\/play\/id\/|.html/g, '').replace(/\/sid\/|\/nid\//g, '-');
 };
 
 const parseVideoResult = (element) => {
-  const img = element.find('img');
-  const firstLink = element.find('a').first();
+  const img = element.find('.vodlist_thumb');
   const imgLink = img.attr('data-original') || img.attr('src');
   const result = {
-    detailId: parseDetailId(firstLink.attr('href')),
-    title: element.find('h6').find('a').text().trim() || firstLink.text().trim(),
+    detailId: parseDetailId(img.attr('href')),
+    title: img.attr('title'),
     picture: imgLink ? `${c.BASE_URL}${imgLink}` : undefined,
-    // mark: element.find('.mark, .figure_mask').text().trim(),
-    // scores: element.find('.scores').find('strong').text().trim()
+    // scores: element.find('.text_dy').text().trim()
   };
-
-  //TODO: parse for more description
 
   return jh.compactObject(result);
 };
 
 const parseDetail = (html) => {
   const $ = cheerio.load(html);
-  const current = $('.current');
+  const thumb = $('.content_thumb > .vodlist_thumb, .play_vlist > .play_vlist_thumb').first();
+  const thumbLink = thumb.attr('data-original');
   const result = {
-    detailId: parseDetailId(current.attr('href')),
-    title: current.text().trim(),
-    picture: c.BASE_URL + $('.mod_vod_box').find('.lazy').attr('src'),
-    description: $('.c9.mt5.ftno').text().replace(/欢迎在线观看《[\S\s]*/g, '').trim()
+    detailId: thumb.attr('dids'),
+    title: $('h2.title').text().trim(),
+    scores: $('.star_tips, .text_score').text().trim(),
+    picture: thumbLink ? c.BASE_URL + thumb.attr('data-original') : undefined,
+    description: $('.content_desc > span:first-child, .play_content > p:last-child').text().trim()
   };
+
+  result.playInfos = [];
+  $('.playlist_full').last().find('a').each((i, elem) => {
+    result.playInfos.push(parsePlayInfo($(elem)));
+  });
+
   return jh.compactObject(result);
 };
 
@@ -80,53 +84,70 @@ const parsePlayInfo = (element) => {
   return jh.compactObject(result);
 };
 
-const parseTypes = (html) => {
-  const $ = cheerio.load(html);
-  const types = [];
-  $('.list_item').each((i, elem) => {
-    let lastType;
-    const links = $(elem).find('a');
-    links.last().remove();
-    links.each((i, link) => {
-      const url = link.attribs.href;
-      if (!url || !url.startsWith('/?m=vod-type-id-')) return;
-      const type = {
-        name: $(link).text(),
-        value: url.replace(/\/\?m=vod-type-id-|.html$/g, '')
-      };
-      if (i === 0) {
-        type.subTypes = [];
-        types.push(type);
-        lastType = type;
-        return;
-      }
-      if (!lastType) return;
-      lastType.subTypes.push(type);
-    });
-  });
-  return types;
+const parseTypeId = (link) => {
+  return link
+    && link.extractBetween('/id/', '/').replace('.html', '');
 };
 
-const getDefaultList = (instance) => {
+const getTypeFilters = (instance, typeId) => {
+  const vod = typeId ? `show/id/${typeId}` : 'search';
+
   const options = {
     method: 'GET',
-    url: `${c.BASE_URL}/?m=vod-list-id-1.html`
-  };
-  return getResponse(instance, options);
-};
+    url: `${c.BASE_URL}/index.php/vod/show/id/${typeId}.html`,
+  }
 
-const getConditionFilter = (index, startString, endString, instance) => {
-  const filters = [];
-  return getDefaultList(instance)
+  return getResponse(instance, options)
     .then(response => {
       const $ = cheerio.load(response.data);
-      $('.mod_cont').eq(index).find('a').each((i, elem) => {
-        if (i === 0) return;
-        filters.push({
-          name: elem.children[0].data,
-          value: decodeURIComponent(elem.attribs.href.extractBetween(startString, endString))
+      const filters = {};
+      $('.wrapper_fl').each((i, elem) => {
+        let linkKey;
+        const filterValues = [];
+
+        switch (i) {
+          case 0:
+            filters.types = filterValues;
+            linkKey = 'id';
+            break;
+          case 1:
+            filters.areas = filterValues;
+            linkKey = 'area';
+            break;
+          case 2:
+            filters.years = filterValues;
+            linkKey = 'year';
+            break;
+          case 3:
+            filters.languages = filterValues;
+            linkKey = 'lang';
+            break;
+          case 4:
+            filters.letters = filterValues;
+            linkKey = 'letter';
+            break;
+          case 5:
+            filters.conditions = filterValues;
+            linkKey = 'ifvip';
+            break;
+          case 6:
+            filters.orders = filterValues;
+            linkKey = 'by';
+            break;
+        }
+
+        $(elem).find('a').each((_, linkElem) => {
+          const value = (linkElem.attribs['href'] || '')
+            .extractBetween(`/${linkKey}/`, '/')
+            .replace('.html', '');
+          if (!value) return;
+          filterValues.push({
+            name: linkElem.children[0].data,
+            value: decodeURIComponent(value)
+          });
         });
       });
+
       return filters;
     });
 };
@@ -159,94 +180,53 @@ class Olevod {
   }
 
   /**
-   * Get the type filters that is supported on olevod.com
+   * Get the filters that is supported on olevod.com
    * @returns {Promise<{}>}
    */
-  static getTypes() {
+  static getFilters() {
     const {isAdult, instance = olevodInstance} = jh.convertToByReference(arguments, ['isAdult', 'instance']);
-    const calls = [getDefaultList(instance)];
-    if (isAdult) {
-      calls.push(
-        getResponse(instance, {
-          method: 'GET',
-          url: `${c.BASE_URL}/index.php?m=label-a_vod_index.html`
-        })
-      )
-    }
-
-    const types = [];
-    return Promise.all(calls)
-      .then(responses => {
-        responses.forEach((response, index) => {
-          const newTypes = parseTypes(response.data);
-          if (isAdult && index === 1) {
-            newTypes.forEach(newType => {
-              newType.name = `午夜影院 ${newType.name}`;
-            })
-          }
-          types.push(...newTypes);
-        });
-
-        return types;
-      });
-  }
-
-  /**
-   * Get the order filters that is supported on olevod.com
-   * @returns {Promise<{}>}
-   */
-  static getOrders() {
-    const {instance = olevodInstance} = jh.convertToByReference(arguments, ['instance']);
-    const orders = [];
-    return getDefaultList(instance)
+    const options = {
+      method: 'GET',
+      url: c.BASE_URL
+    };
+    return getResponse(instance, options)
       .then(response => {
         const $ = cheerio.load(response.data);
-
-        $('.mod_toolbar').find('a').each((i, elem) => {
-          orders.push({
+        const types = [];
+        $('.top_nav').find('a').each((i, elem) => {
+          const typeId = parseTypeId(elem.attribs.href);
+          if (!typeId || (!isAdult && typeId === c.TYPES.ADULT.value)) return;
+          types.push({
             name: elem.children[0].data,
-            value: elem.attribs.href.extractBetween('order-', '-class')
-          })
+            value: typeId
+          });
         });
-
-        return orders;
+        const filters = {
+          types,
+          areas: [],
+          years: [],
+          languages: [],
+          letters: [],
+          conditions: [],
+          orders: []
+        };
+        return Promise.all(types.map(type => {
+          return getTypeFilters(instance, type.value)
+            .then((typeFilters) => {
+              type.subTypes = typeFilters.types;
+              _.forEach(filters, (value, key) => {
+                if (key === 'types') return;
+                value.push(...typeFilters[key]);
+              });
+            });
+        }))
+          .then(() => {
+            _.forEach(filters, (value, key) => {
+              filters[key] = _.uniqBy(value, 'value');
+            });
+            return jh.compactObject(filters);
+          });
       });
-  }
-
-  /**
-   * Get the year filters that is supported on olevod.com
-   * @returns {Promise<{}>}
-   */
-  static getYears() {
-    const {instance = olevodInstance} = jh.convertToByReference(arguments, ['instance']);
-    return getConditionFilter(1, 'year-', '-', instance);
-  }
-
-  /**
-   * Get the area filters that is supported on olevod.com
-   * @returns {Promise<{}>}
-   */
-  static getAreas() {
-    const {instance = olevodInstance} = jh.convertToByReference(arguments, ['instance']);
-    return getConditionFilter(2, 'area-', '-', instance);
-  }
-
-  /**
-   * Get the language filters that is supported on olevod.com
-   * @returns {Promise<{}>}
-   */
-  static getLanguages() {
-    const {instance = olevodInstance} = jh.convertToByReference(arguments, ['instance']);
-    return getConditionFilter(3, 'lang-', '.html', instance);
-  }
-
-  /**
-   * Get the letter filters that is supported on olevod.com
-   * @returns {Promise<{}>}
-   */
-  static getLetters() {
-    const {instance = olevodInstance} = jh.convertToByReference(arguments, ['instance']);
-    return getConditionFilter(4, 'letter-', '-', instance);
   }
 
   /**
@@ -260,66 +240,19 @@ class Olevod {
       ['search', 'typeId', 'page', 'order', 'year', 'letter', 'area', 'language', 'instance']
     );
 
-    // When it doesn't have typeId or search
-    if (!typeId && !search) {
-      let mode;
-      switch (order){
-        case c.ORDERS.HITS.value:
-        case c.ORDERS.RATES.value:
-          mode = 'vod-map';
-          break;
-        case c.ORDERS.TIME.value:
-        default:
-          mode = 'label-new';
-      }
-
-      const options = {
-        method: 'GET',
-        url: `${c.BASE_URL}/index.php`,
-        params: {
-          m: `${mode}.html`,
-        }
-      };
-      return getResponse(instance, options)
-        .then((response) => {
-          const $ = cheerio.load(response.data);
-          const results = [];
-
-          $('.n-content, .w-content').each((i, elem) => {
-            const element = $(elem);
-            const section = element.find('.title').text().trim();
-
-            let lists;
-            switch (order){
-              case c.ORDERS.HITS.value:
-                lists = element.find('ul').last().find('li');
-                break;
-              case c.ORDERS.RATES.value:
-                lists = element.find('ul').first().find('li');
-                break;
-              case c.ORDERS.TIME.value:
-              default:
-                lists = element.find('li');
-            }
-
-            lists.each((i, elem) => {
-              const result = parseVideoResult($(elem));
-              result.section = section;
-              results.push(result);
-            })
-          });
-
-          return results;
-        })
-    }
-
-    const vod = search ? `search` : `list-id-${typeId}`;
+    const vod = typeId ? `show/id/${typeId}` : 'search';
 
     const options = {
       method: 'GET',
-      url: `${c.BASE_URL}/index.php`,
+      url: `${c.BASE_URL}/index.php/vod/${vod}.html`,
       params: {
-        m: `vod-${vod}-pg-${page}-wd-${search || ''}-order-${order || ''}-class--year-${year || ''}-letter-${letter || ''}-area-${area || ''}-lang-${language || ''}.html`,
+        wd: search,
+        page,
+        by: order,
+        year,
+        letter,
+        area,
+        lang: language
       }
     };
 
@@ -328,8 +261,10 @@ class Olevod {
         const $ = cheerio.load(response.data);
         const results = [];
 
-        $('.mod_video_list, .mod_list').find('li').each((i, elem) => {
-          results.push(parseVideoResult($(elem)));
+        $('.vodlist').find('.searchlist_item, .vodlist_item').each((i, elem) => {
+          const result = parseVideoResult($(elem));
+          if (!result.detailId) return;
+          results.push(result);
         });
 
         return results;
@@ -345,22 +280,13 @@ class Olevod {
 
     const options = {
       method: 'GET',
-      url: c.BASE_URL,
-      params: {
-        m: `vod-detail-id-${detailId}.html`,
-      }
+      url: `${c.BASE_URL}/index.php/vod/detail/id/${detailId}.html`,
     };
 
     return getResponse(instance, options)
       .then(response => {
         const result = parseDetail(response.data);
-
-        const $ = cheerio.load(response.data);
-        result.playInfos = [];
-        $('.showplayul').find('a').each((i, elem) => {
-          result.playInfos.push(parsePlayInfo($(elem)));
-        });
-
+        result.detailId = result.detail || detailId;
         return result;
       });
   }
@@ -368,31 +294,26 @@ class Olevod {
   static getPlayInfo() {
     let {playId, instance = olevodInstance} = jh.convertToByReference(arguments, ['playId', 'instance']);
 
+    const [detailId, sid, nid] = playId.split('-');
     const options = {
       method: 'GET',
-      url: c.BASE_URL,
-      params: {
-        m: `vod-play-id-${playId}.html`,
-      }
+      url: `${c.BASE_URL}/index.php/vod/play/id/${detailId}/sid/${sid}/nid/${nid}.html`,
     };
 
     return getResponse(instance, options)
       .then(response => {
         const detail = parseDetail(response.data);
+        detail.detailId = detail.detail || detailId;
 
         const $ = cheerio.load(response.data);
 
-        const urlName = response.data.extractBetween('this.videoUrl = ', ';');
-        const urlCommand = response.data.extractBetween(`${urlName} = `, ';');
-        const context = {};
-        vm.createContext(context);
-        vm.runInContext(`${urlName} = ${urlCommand}`, context);
+        const playerData = JSON.parse(response.data.extractBetween('var player_', '}').replace(/[^=]*=/g, '') + '}');
 
         const result = {
           playId: playId,
-          title: $('.play_nav').find('dd').text().trim(),
+          title: $('.playlist_full').find('.active').text().trim(),
           detail: detail,
-          videoUrl: context[urlName]
+          videoUrl: playerData.url
         };
 
         return jh.compactObject(result);

@@ -33,10 +33,10 @@ const alive = await Olevod.alive(axiosInstance);
 const alive = await Olevod.alive({instance: axiosInstance});
 ```
 
-- `getTypes`: Get the types filters that is supported on olevod.com
+- `getFilters`: Get the filters that is supported on olevod.com
 
 ```
-const filters = await Olevod.getTypes();
+const filters = await Olevod.getFilters();
 ```
 
 ```
@@ -45,76 +45,6 @@ const filters = await Olevod.getFilters(false, axiosInstance);
 
 ```
 const filters = await Olevod.getFilters({isAdult: false, instance: axiosInstance});
-```
-
-- `getOrders`: Get the order filters that is supported on olevod.com
-
-```
-const filters = await Olevod.getOrders();
-```
-
-```
-const filters = await Olevod.getOrders(axiosInstance);
-```
-
-```
-const filters = await Olevod.getOrders({instance: axiosInstance});
-```
-
-- `getYears`: Get the year filters that is supported on olevod.com
-
-```
-const filters = await Olevod.getYears();
-```
-
-```
-const filters = await Olevod.getYears(axiosInstance);
-```
-
-```
-const filters = await Olevod.getYears({instance: axiosInstance});
-```
-
-- `getAreas`: Get the area filters that is supported on olevod.com
-
-```
-const filters = await Olevod.getAreas();
-```
-
-```
-const filters = await Olevod.getAreas(axiosInstance);
-```
-
-```
-const filters = await Olevod.getAreas({instance: axiosInstance});
-```
-
-- `getLanguages`: Get the language filters that is supported on olevod.com
-
-```
-const filters = await Olevod.getLanguages();
-```
-
-```
-const filters = await Olevod.getLanguages(axiosInstance);
-```
-
-```
-const filters = await Olevod.getLanguages({instance: axiosInstance});
-```
-
-- `getLetters`: Get the letter filters that is supported on olevod.com
-
-```
-const filters = await Olevod.getLetters();
-```
-
-```
-const filters = await Olevod.getLetters(axiosInstance);
-```
-
-```
-const filters = await Olevod.getLetters({instance: axiosInstance});
 ```
 
 - `getVideos`: Search for videos on olevod.com
