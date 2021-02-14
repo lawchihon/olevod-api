@@ -234,10 +234,10 @@ class Olevod {
    * @returns {Promise<Array>}
    */
   static getVideos() {
-    const {search, typeId, page = 1, order = c.ORDERS.TIME.value, year, letter, area, language, instance = olevodInstance}
+    const {search, typeId, page = 1, order = c.ORDERS.TIME.value, year, letter, area, language, condition, instance = olevodInstance}
     = jh.convertToByReference(
       arguments,
-      ['search', 'typeId', 'page', 'order', 'year', 'letter', 'area', 'language', 'instance']
+      ['search', 'typeId', 'page', 'order', 'year', 'letter', 'area', 'language', 'condition', 'instance']
     );
 
     const vod = typeId ? `show/id/${typeId}` : 'search';
@@ -252,7 +252,8 @@ class Olevod {
         year,
         letter,
         area,
-        lang: language
+        lang: language,
+        ifvip: condition
       }
     };
 

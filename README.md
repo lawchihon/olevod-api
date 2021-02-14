@@ -54,11 +54,11 @@ const filters = await Olevod.getFilters({isAdult: false, instance: axiosInstance
 `Note2: 'page' default to be 1`
 
 ```
-const videos = await Olevod.getVideos(search, typeId, page, order, year, letter, area, language, instance);
+const videos = await Olevod.getVideos(search, typeId, page, order, year, letter, area, language, condition, instance);
 ```
 
 ```
-const videos = await Olevod.getVideos({search, typeId, page, order, year, letter, area, language, instance});
+const videos = await Olevod.getVideos({search, typeId, page, order, year, letter, area, language, condition, instance});
 ```
 
 - `getVideo`: Get the video info base on detailId
