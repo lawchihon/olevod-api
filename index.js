@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const cheerio = require('cheerio');
+const jc = require('@johman/constants');
 const jh = require('@johman/helper');
 const axios = require('axios');
 const vm = require('vm');
@@ -303,6 +304,9 @@ class Olevod {
 
     return getResponse(instance, options)
       .then(response => {
+        if (response.data.includes('亲爱的：您没有权限访问此数据，请升级会员'))
+            return Promise.reject(jc.ERRORS.LOGIN_REQUIRED);
+
         const detail = parseDetail(response.data);
         detail.detailId = detail.detail || detailId;
 

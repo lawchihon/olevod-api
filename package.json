@@ -22,12 +22,14 @@
   "author": "Chi Hon Law <chihonlaw@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
+    "@johman/constants": "git+ssh://git@bitbucket.org/jmlaw0213/johman-constants.git",
     "@johman/helper": "^0.0.0",
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.2",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
+    "@johman/constants": "git+ssh://git@bitbucket.org/jmlaw0213/johman-constants.git",
     "@johman/helper": "^0.0.0",
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.2",
