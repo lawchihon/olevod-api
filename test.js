@@ -71,7 +71,7 @@ describe('olevod', function() {
     it('search videos with context `星`', function(){
       return Olevod.getVideos({search: '星'})
         .then(videos => {
-          assert.strictEqual(videos.length, 33);
+          assert.strictEqual(videos.length, 27);
         })
         .catch(jh.handleTestError);
     });
@@ -80,7 +80,7 @@ describe('olevod', function() {
   describe('getVideo()', function() {
     this.timeout(90000);
     it('get video', function(){
-      const detailId = '1';
+      const detailId = '7619';
       return Olevod.getVideo({detailId})
         .then(video => {
           assert.strictEqual(video.detailId, detailId);
@@ -94,13 +94,14 @@ describe('olevod', function() {
   describe('getPlayInfo()', function() {
     this.timeout(90000);
     it('get play info', function(){
-      const playId = '1-1-1';
+      const detailId = '29735';
+      const playId = `${detailId}-1-1`;
       return Olevod.getPlayInfo({playId})
         .then(playInfo => {
           assert.strictEqual(playInfo.playId, playId);
-          assert.strictEqual(playInfo.title, '在线播放');
-          assert.strictEqual(playInfo.detail.detailId, '1');
-          assert.strictEqual(playInfo.detail.title, '星际穿越');
+          assert.strictEqual(playInfo.title, '高清播放');
+          assert.strictEqual(playInfo.detail.detailId, detailId);
+          assert.strictEqual(playInfo.detail.title, '失控玩家');
         })
         .catch(jh.handleTestError);
     });
