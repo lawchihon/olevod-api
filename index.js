@@ -50,7 +50,7 @@ const parseVideoResult = (element) => {
   const result = {
     detailId: parseDetailId(img.attr('href')),
     title: img.attr('title'),
-    picture: imgLink ? `${c.BASE_URL}${imgLink}` : undefined,
+    picture: imgLink ? (new URL(imgLink, c.BASE_URL)).toString() : undefined,
     // scores: element.find('.text_dy').text().trim()
   };
 
